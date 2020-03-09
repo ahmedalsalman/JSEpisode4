@@ -70,7 +70,11 @@ function booksByColor(books) {
  *    ["The Hitchhikers Guide", "The Meaning of Liff"]
  ****************************************************************/
 function titlesByAuthorName(authorName, authors, books) {
-  return (books.filter(obj => obj.authors[0].name.toLowerCase() == authorName.toLowerCase())).map(el => el.title);
+  let mine = getAuthorByName(authorName, authors);
+  if (mine) {
+    return mine.books.map(id => getBookById(id, books).title)
+  }
+  return []
 }
 
 /**************************************************************
@@ -118,12 +122,17 @@ function mostProlificAuthor(authors) {
  * BONUS: REMOVE DUPLICATE BOOKS
  ****************************************************************/
 function relatedBooks(bookId, authors, books) {
+  const book = getBookById(bookId, books);
   let titles = [];
-  let names = (authors.filter(obj => obj.books.includes(bookId))).map(el => el.name);
-  for (let i = 0; i < names.length; i++) {
-    (titlesByAuthorName(names[i], authors, books)).forEach(nn => titles.push(nn))
-  }
-  return [...new Set(titles)];
+
+  book.authors.forEach(
+    author =>
+      (titles = titles.concat(titlesByAuthorName(author.name, authors, books)))
+  );
+
+
+
+  return titles;
 }
 
 /**************************************************************
@@ -133,7 +142,27 @@ function relatedBooks(bookId, authors, books) {
  *   co-authored the greatest number of books
  ****************************************************************/
 function friendliestAuthor(authors) {
+  authors.forEach(author => {
+    author.coauthoringCount = 0;
+    authors.forEach(secondAuthor => {
+      if (secondAuthor.name !== author.name) {
+        const sharedBooks = secondAuthor.books.filter(bookId =>
+          author.books.includes(bookId)
+        );
+        author.coauthoringCount += sharedBooks.length;
+      }
+    });
+  });
 
+  let friendlyAuthor = authors[0];
+
+  authors.forEach(author => {
+    if (author.coauthoringCount > friendlyAuthor.coauthoringCount) {
+      friendlyAuthor = author;
+    }
+  });
+
+  return friendlyAuthor.name;
 }
 
 module.exports = {
